@@ -1,0 +1,19 @@
+{
+  "name": "node.js-blog",
+  "version": "1.0.0",
+  "description": "其中.gitignore里面的是忽略文件，忽略了node的模块。",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/he56jian/node.js-blog.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/he56jian/node.js-blog/issues"
+  },
+  "homepage": "https://github.com/he56jian/node.js-blog#readme"
+}
