@@ -6,14 +6,9 @@ const user = require('../controd/user')			//用户的处理函数中间件
 const artical = require('../controd/artical')		//文章的处理函数中间件
 const router = new Router
 
-//设置主页,都是在/根目录下，一定只能通过get方式访问
-router.get('/',user.keeplog,async (ctx) => {
-	//异步函数，要加await，不然不执行;//直接在render里导入文件就行
-	await  ctx.render('index', {
-		title: 'node项目',
-		session:ctx.session
-	})
-})
+
+router.get('/',user.keeplog,artical.getList)			//设置主页,都是在/根目录下，一定只能通过get方式访问
+router.get('/page/:id',artical.getList)				//文章列表分页；前面id写多少，就按照对应方式查找；当前是否会改变根目录情况
 
 //主要用来处理用户登录和用户注册。因为页面类似，操作类似。
 //使用动态路由，减少代码量；在url中：id,然后在对应的回调函数中的ctx.params中能拿到，其动态路由的值
@@ -25,17 +20,15 @@ router.get(/^\/user\/(?=login|reg)/,async(ctx) =>{
 })
 
 // 由于登录和注册都需要用到数据，并且要不刷新页面，防止出现数据丢失，所以用post请求
-router.post('/user/login',user.login)	//处理登录事件
+router.post('/user/login',user.login)	//处理登录事件 	路由
 
-router.post('/user/reg',user.reg)		//处理注册事件；输入账号后，存入数据库；
+router.post('/user/reg',user.reg)			//处理注册事件；输入账号后，存入数据库；路由
 
-//用户退出
-router.get('/user/logout',user.logout)
+router.get('/user/logout',user.logout)		//用户退出 路由
 
-//新建文章,不过在进入新建文章之前，先要判断是否有权限，使用user.keeplog
-router.get('/article',user.keeplog,artical.addPage)
+router.get('/article',user.keeplog,artical.addPage)		//新建文章,不过在进入新建文章之前，先要判断是否有权限，使用user.keeplog
 
-//发布文章
-router.post('/article',user.keeplog,artical.add)
+router.post('/article',user.keeplog,artical.add)		//发布文章
+
 
 module.exports = router

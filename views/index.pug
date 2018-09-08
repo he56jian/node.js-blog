@@ -1,7 +1,7 @@
 extends ./layout/layout
 
 block css
-  link(rel="stylesheet", href="/css/index.css")
+    link(rel="stylesheet", href="/css/index.css")
 //- 
   artList
     头像
@@ -12,36 +12,36 @@ block css
     评论数
 
 block contents
-  include ./layout/tag
-  
-  .layui-container
-    .layui-row.layui-col-space15
-      //- 文章列表
-      .layui-col-md8
-        ul.article-list
-          //- li index.html
-          //- li 这是 pug 渲染出来的首页
-          li index.html
-          // each info in artList
-          //   li
-          //     a.list-face
-          //       img(src=info.author.avatar, alt=info.author)
-          //     h2
-          //       a.layui-badge= info.tips
-          //       a.articlt-title.ellipsis(href=`/article/${info._id}`)= info.title
-          //     .list-info
-          //       a= info.author.username
-          //       span= info.created.toLocaleString()
-          //       span.list-reply
-          //         i(title="评论").layui-icon.layui-icon-file-b
-          //         = info.commentNum
-        include ./layout/laypage.pug
-        
-      //- 右侧公告
-      include ./layout/right_tag
+    include ./layout/tag
+    .layui-container
+        .layui-row.layui-col-space15
+            //- 文章列表
+            .layui-col-md8
+                ul.article-list
+                    //- li index.html
+                    //- li 这是 pug 渲染出来的首页
+                    //li index.htm
+                    each info in artList
+                        li
+                            a.list-face
+                                img(src=info.auther.avatar, alt=info.auther)
+                            h2
+                                a.layui-badge= info.tips
+                                a.articlt-title.ellipsis(href=`/article/${info._id}`)= info.title
+                            .list-info
+                                a= info.auther.username
+                            //获取时间，并格式化
+                            span= info.created.toLocaleString()
+                            span.list-reply
+                                i(title="评论").layui-icon.layui-icon-file-b
+                                = info.commentNum
+                include ./layout/laypage.pug
+
+            //- 右侧公告
+            include ./layout/right_tag
 
 block scripts
-  script(src="/js/index.js")
+    script(src="/js/index.js")
   
     
     

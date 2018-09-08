@@ -10,7 +10,7 @@ const enCrypto = require('../encrypto')
 // 通过db对象创建操作user表的模型对象
 const User = db.model('users', userSchema)
 
-//处理登录状态保持用户状态，判断，是否有权限添加
+//处理登录状态保持用户状态，判断，是否有权限添加,判断当前是否为登录状态；
 exports.keeplog = async (ctx, next) => {
 	// ctx.session.isNew用于判断session的值是否为一个新的值
 	if (ctx.session.isNew) {			//session没有值的时候，
@@ -27,12 +27,13 @@ exports.keeplog = async (ctx, next) => {
 
 //处理登录事件
 exports.login = async (ctx) => {
-	//用户登录时，先要去数据库查看是否存在该用户名
+	//获取前端发过来的账号密码
 	const user = ctx.request.body
 	const username = user.username
 	const password = user.password
+
 	await new Promise((resolve, reject) => {
-		User.find({username}, (err, data) => {
+		User.find({username}, (err, data) => {	//用户登录时，先要去数据库查看是否存在该用户名
 			if (err) {					//在查找数据库过程中出错
 				reject('')
 			}
@@ -69,7 +70,8 @@ exports.login = async (ctx) => {
 			// //传入后台状态session
 			ctx.session = {
 				username,
-				uid: data[0]._id
+				uid: data[0]._id,
+				avatar:data[0].avatar
 			}
 			await ctx.render('isOk', {status: '登录成功'})
 		})
