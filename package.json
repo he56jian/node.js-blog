@@ -23,6 +23,7 @@
     "koa-logger": "^3.2.0",
     "koa-router": "^7.4.0",
     "koa-schema": "0.0.1",
+    "koa-session": "^5.9.0",
     "koa-static": "^5.0.0",
     "koa-views": "^6.1.4",
     "mongoose": "^5.2.13",

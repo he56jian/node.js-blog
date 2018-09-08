@@ -7,7 +7,21 @@ const app = new Koa
 const views = require('koa-views')				//因为要用pug模板引擎注册到koa上，需要koa-views模块中间件处理;他会自动识别pug模板引擎；
 const {join} = require('path')					//因为在要使用路径相关的，所以要导入path核心模块
 const static = require('koa-static')			//因为有用到css和js及图片的静态资源，所以要引入koa-static模块，专门处理静态资源的
-const logger = require('koa-logger')			//导入一个日志模块，便于查看日志
+const session = require('koa-session')			//因为http请求是无状态的，如果要保留用户的登录状态需要用到koa-session模块,在后端实现，类似前端cookie的东西；
+//配置session,需要过期时间，
+app.keys = ['Sid']			//要用到session时，要加上当前值，要不然会报错
+const CONFIG = {
+	key:'Sid',									//用于在后面查找
+	maxAge:36e5,							//过期时间
+	autoCommit:true,							//是否自动提交
+	overwrite:true,								//是否覆盖
+	httpOnly:true,								//http是否不可见
+	// signed:true,								//是否签名
+	rolling:false								//是否在有新操作时刷新
+}
+app.use(session(CONFIG,app))
+
+// const logger = require('koa-logger')			//导入一个日志模块，便于查看日志
 // app.use(logger())//日志文件，放在第一个中间件中好点
 
 //在输入密码登录后，由于要传递submit到后台，后台要接受数据，就不能使用get方法，因为如果用的是get方法，会刷新页面，会导致数据传输失败；所以要用post请求，post请求的话就要用到koa-body来处理比较方便；

@@ -10,16 +10,19 @@ const enCrypto = require('../encrypto')
 // 通过db对象创建操作user表的模型对象
 const User = db.model('users', userSchema)
 
-//用户状态
-exports.status = async (ctx) =>{
+//处理登录状态保持用户状态，判断，是否有权限添加
+exports.keeplog = async (ctx, next) => {
+	// ctx.session.isNew用于判断session的值是否为一个新的值
+	if (ctx.session.isNew) {			//session没有值的时候，
+		if (ctx.cookies.get('username')) {			//如果cookies里面有值，则赋值给session
+			ctx.session = {
+				username: ctx.cookies.get('username'),
+				uid: ctx.cookies.get('uid')
+			}
+		}
+	}
+	await next()
 
-	//异步函数，要加await，不然不执行;//直接在render里导入文件就行
-	await  ctx.render('index',{
-		title:'node项目',
-		// session:{
-		// 	role:66,
-		// }
-	})
 }
 
 //处理登录事件
@@ -28,41 +31,52 @@ exports.login = async (ctx) => {
 	const user = ctx.request.body
 	const username = user.username
 	const password = user.password
-	await new Promise((resolve,reject)=>{
-		User.find({username},(err,data)=>{
-			if(err){					//在查找数据库过程中出错
-				console.log(err)
-				reject(err)
+	await new Promise((resolve, reject) => {
+		User.find({username}, (err, data) => {
+			if (err) {					//在查找数据库过程中出错
+				reject('')
 			}
 			//查找数据库，1、查找到，2、查找不到
-			if(data.length !== 0){
-				//因为data是一个数组，所以要加个[0]
-				if(enCrypto(password) === data[0].password){
-					resolve('登录成功')
-				}
-
-				resolve('密码错误')		//如果查找到了,说明数据库已经存在
-			}else{
-				resolve('用户不存在，')		//查找不到，说明数据库没存在;用户不存在
+			if (data.length === 0) {
+				return reject('用户不存在')		//查找不到，说明数据库没存在;用户不存在
 			}
-
+			//因为data是一个数组，所以要加个[0]
+			if (enCrypto(password) !== data[0].password) {
+				return reject('密码错误')
+			}		//如果查找到了,说明数据库已经存在
+			resolve(data)
 		})
 	})
-		.then(async (res)=>{
-			if(res){
-				await ctx.render('isOk',{status:res})
-			}else{
-				await ctx.render('isOk',{status:res+'，请重试'})
+		.then(async (data) => {
+			//登录成功；把登录的结果放入cookie;使用方法set,第一个参数传入键、第二个参数传入值，第三个参数传入配置的信息；
+			ctx.cookies.set('username', username, {
+				domain: 'localhost',			//作用的页面
+				path: '/',					//作用的路径
+				maxAge: 36e5,
+				httpOnly: false,			//不给前端用
+				overwrite: false,
+				// signed: true
+			})
+			ctx.cookies.set('uid', data[0]._id, {
+				domain: 'localhost',			//作用的页面
+				path: '/',					//作用的路径
+				maxAge: 36e5,
+				httpOnly: true,
+				overwrite: false,
+				// signed: true
+			})
+
+			// //传入后台状态session
+			ctx.session = {
+				username,
+				uid: data[0]._id
 			}
+			await ctx.render('isOk', {status: '登录成功'})
 		})
-		.catch(async ()=>{
-			await ctx.render('isOk',{status:'登录失败，请重试'})
+		.catch(async (res) => {
+			await ctx.render('isOk', {status: res || '登录失败'})
 		})
 }
-
-
-
-
 
 //处理注册事件
 exports.reg = async (ctx) => {
@@ -112,3 +126,23 @@ exports.reg = async (ctx) => {
 			await ctx.render('./isOk', {status: '登录失败'})
 		})
 }
+
+//用户退出中间件
+exports.logout = async (ctx) => {
+	ctx.session = null;
+	ctx.cookies.set('username', null, {
+		maxAge: 0
+	})
+	ctx.cookies.set('uid', null, {
+		maxAge: 0
+	})
+	//重定向到根目录		//前端重定向到根 location.href = '/'
+	ctx.redirect('/')
+	// await ctx.render('isOk',{status:'退出'})
+}
+
+
+
+
+
+
