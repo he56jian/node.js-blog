@@ -1,17 +1,20 @@
 //专门用于处理文章列表的中间件
 const articalSchema = require('../schemas/artical')
+const commentSchema = require('../schemas/comment')
 const {db} = require('../schemas/config')			//导入用于处理字数据库的命令
 //通过子数据库，创建用于执行子数据库中的表命令的模型对象
 const Articel = db.model('articals', articalSchema)
+const Comment = db.model('comments', commentSchema)
 
 exports.getList = async (ctx) => {
 //在ctx.params.id里可以获取其动态地址的值
 	let page = ctx.params.id || 1			//获取页数
 	page--
 	//获取查询到的最大数量
-	const maxNum  = await Articel.estimatedDocumentCount((err,data)=>{
-		err? console.log(err):data
+	const maxNum = await Articel.estimatedDocumentCount((err, data) => {
+		err ? console.log(err) : data
 	})
+	
 	//所以mongoose的查询的API都不会主动执行,要他主动执行，要传回调函数，或者then（因为mongoose都是promise对象），或者后面添加exec(回调函数)
 	const artList = await Articel		//获取的对象是一个数组类型
 		.find()					//查询所以表内容
@@ -26,6 +29,7 @@ exports.getList = async (ctx) => {
 		.catch(err => {
 			console.log(err)
 		})
+
 	//异步函数，要加await，不然不执行;//直接在render里导入文件就可以了，它的返回值是一个promise对象；
 	await ctx.render('index', {
 		title: '主页',
@@ -49,6 +53,7 @@ exports.add = async ctx => {
 	}
 	//获取post请求，用ctx.request.body
 	const data = ctx.request.body
+	data.commentNum = 0				//发布后设置默认值为0
 	data.auther = ctx.session.uid
 	//因为save方法返回的是promise对象，所以可以直接await，可以加个then；save回调监听和then监听也可以；不能两个都写，如果两个都写，会出现new Articel两次
 	//而因为要返回数据，涉及到异步，如果异步没有完成则返回数据的话，会返回数据线执行，有可能发挥的数据不是想要的数据
@@ -72,5 +77,58 @@ exports.add = async ctx => {
 				status: 0
 			}
 		})
+}
+
+//文章详情页
+exports.details = async ctx => {
+	const _id = ctx.params.id			//获取动态ID，为文章的ID
+	const article = await Articel.findById(_id).populate({
+			path: 'auther',
+			select: 'username'
+		})
+		.then(async data => {
+			return data
+		})
+		.catch(async err => {
+			console.log(err)
+		})
+	//查找跟评论相关的文章数据,find里放的是用户的ID，如果放的是article的ID，则要变为对象方式
+	const comment = await Comment
+		.find({article:_id})
+		.sort('-created')			//根据时间倒序
+		.populate('from','username avatar')		//获取关联的用户信息
+		.then(async data =>{
+			return data})
+		.catch(async err=>console.log(err))
+	console.log(comment)
+	await ctx.render('article', {
+		title: '文章详情',
+		session: ctx.session,
+		article,
+		comment,
+	})
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -14,23 +14,23 @@ layui.use(['layedit', 'layer', 'element'], function(){
   $(".layui-unselect.layui-layedit-tool").hide()
 
   
-
-  $(".commment button").click(async () => {
+//发表评论
+  $(".comment button").click(async () => {
     let content = layedit.getContent(idx).trim()
 
     if(content.length === 0)return layer.msg("评论内容不能为空")
-
+//获取评论内容，并关联文章
     const data = {
       content,
       article: $(".art-title").data("artid")
     }
-
+//发起post请求
     $.post("/comment", data, (data) => {
       layer.msg(data.msg, {
         time: 1000,
         end(){
           if(data.status === 1){
-            // 评论成功就承载页面
+            // 评论成功就重载页面
             window.location.reload()
           }
         }

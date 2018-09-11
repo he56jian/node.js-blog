@@ -8,6 +8,7 @@ const ArticalSchema = new Schema({
 	title:String,
 	tips:String,
 	content: String,
+	commentNum:Number,				//评论数量
 	auther:{
 		type:ObjectId,
 		ref:'users'							//用于关联其他表，其值是在另一个表生成时的model函数的第一个参数

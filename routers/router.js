@@ -4,6 +4,7 @@ const Router = require('koa-router')
 //拿到操作user表的逻辑对象
 const user = require('../controd/user')			//用户的处理函数中间件
 const artical = require('../controd/artical')		//文章的处理函数中间件
+const comment = require('../controd/comment')		//处理文章评论的中间件
 const router = new Router
 
 
@@ -18,7 +19,7 @@ router.get(/^\/user\/(?=login|reg)/,async(ctx) =>{
 	//如果show为真，则为注册页面，反之为登录页面;并且在模板引擎中，show用来判断注册和登录页面的显示隐藏
 	await ctx.render('register',{show:show})
 })
-
+//不同路由响应不同请求
 // 由于登录和注册都需要用到数据，并且要不刷新页面，防止出现数据丢失，所以用post请求
 router.post('/user/login',user.login)	//处理登录事件 	路由
 
@@ -30,5 +31,7 @@ router.get('/article',user.keeplog,artical.addPage)		//新建文章,不过在进
 
 router.post('/article',user.keeplog,artical.add)		//发布文章
 
+router.get('/article/:id',user.keeplog,artical.details) //查看文章详情
 
+router.post('/comment',user.keeplog,comment.addComment)//添加评论
 module.exports = router
