@@ -1,10 +1,12 @@
 //专门用于处理文章列表的中间件
 const articalSchema = require('../schemas/artical')
+const userSchema = require('../schemas/user')
 const commentSchema = require('../schemas/comment')
 const {db} = require('../schemas/config')			//导入用于处理字数据库的命令
 //通过子数据库，创建用于执行子数据库中的表命令的模型对象
 const Articel = db.model('articals', articalSchema)
 const Comment = db.model('comments', commentSchema)
+const User = db.model('users', userSchema)
 
 exports.getList = async (ctx) => {
 //在ctx.params.id里可以获取其动态地址的值
@@ -14,7 +16,7 @@ exports.getList = async (ctx) => {
 	const maxNum = await Articel.estimatedDocumentCount((err, data) => {
 		err ? console.log(err) : data
 	})
-	
+
 	//所以mongoose的查询的API都不会主动执行,要他主动执行，要传回调函数，或者then（因为mongoose都是promise对象），或者后面添加exec(回调函数)
 	const artList = await Articel		//获取的对象是一个数组类型
 		.find()					//查询所以表内容
@@ -62,6 +64,11 @@ exports.add = async ctx => {
 			if (err) {
 				return reject(err)
 			}
+			//更新用户的文章信息
+			User.update({_id: data.auther}, {$inc: {articalNum: 1}}, err => {
+				if (err) return console.log(err)
+				console.log('更新用户文章数量成功')
+			})
 			resolve(data)
 		})
 	})
@@ -94,13 +101,13 @@ exports.details = async ctx => {
 		})
 	//查找跟评论相关的文章数据,find里放的是用户的ID，如果放的是article的ID，则要变为对象方式
 	const comment = await Comment
-		.find({article:_id})
+		.find({article: _id})
 		.sort('-created')			//根据时间倒序
-		.populate('from','username avatar')		//获取关联的用户信息
-		.then(async data =>{
-			return data})
-		.catch(async err=>console.log(err))
-	console.log(comment)
+		.populate('from', 'username avatar')		//获取关联的用户信息
+		.then(async data => {
+			return data
+		})
+		.catch(async err => console.log(err))
 	await ctx.render('article', {
 		title: '文章详情',
 		session: ctx.session,
@@ -110,9 +117,65 @@ exports.details = async ctx => {
 
 }
 
+//获取文章列表
+exports.articalList = async ctx => {
+	const _id = ctx.session.uid
+	const data = await Articel.find({auther: _id}, (err, data) => {
+		if (err) console.log(err)
+	})
+	ctx.body = {
+		code: 0,
+		count: data.length,
+		data
+	}
+}
+
+exports.del = async ctx => {
+	const artId = ctx.params.id
+	//这个_id为文章ID；
+	//在用户数据库中删除
+	//获取对应用户的文章，对应的文章ArticalNum-1
+	// User.update({_id: ctx.session.uid}, {$inc: {articalNum: -1}}).then((...r)=>{
+	// 	console.log(r)
+	// })
+	// Comment.find({article:artId},(err,data)=>{
+	//
+	//
+	// })
+	//删除文章ID对应的文章，
+	// Articel.deleteOne({_id: artId}).exec(err => {
+	// 	if (err) {
+	// 		res = {
+	// 			state: 0,
+	// 			message: '删除文章失败'
+	// 		}
+	// 	} else {
+	// 		res = {
+	// 			state: 1,
+	// 			message: '删除文章成功'
+	// 		}
+	// 	}
+	// })
 
 
+	// console.log(_id,ctx.session.uid)
 
+	let res = {
+		state:1,
+		message:'c删除文章成功'
+	}
+
+	await Articel.findById(artId)
+		.then(data=>{data.remove()})
+		.catch(err=>{
+			res={
+				state:0,
+				message:'删除文章失败'
+			}
+		})
+
+	ctx.body = res
+}
 
 
 

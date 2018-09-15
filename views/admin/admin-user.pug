@@ -23,7 +23,7 @@ block main
       table.on("tool(demo)", (obj) => {
         const data = obj.data
         const _id = data._id
-        //console.log(data)
+        //
         if(obj.event !== "del") return
 
         layer.confirm("确认删除？", () => {

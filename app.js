@@ -8,19 +8,25 @@ const views = require('koa-views')				//因为要用pug模板引擎注册到koa�
 const {join} = require('path')					//因为在要使用路径相关的，所以要导入path核心模块
 const static = require('koa-static')			//因为有用到css和js及图片的静态资源，所以要引入koa-static模块，专门处理静态资源的
 const session = require('koa-session')			//因为http请求是无状态的，如果要保留用户的登录状态需要用到koa-session模块,在后端实现，类似前端cookie的东西；
+const compress = require('koa-compress')
 //配置session,需要过期时间，
 app.keys = ['Sid']			//要用到session时，要加上当前值，要不然会报错
 const CONFIG = {
-	key:'Sid',									//用于在后面查找
-	maxAge:36e5,							//过期时间
-	autoCommit:true,							//是否自动提交
-	overwrite:true,								//是否覆盖
-	httpOnly:true,								//http是否不可见
+	key: 'Sid',									//用于在后面查找
+	maxAge: 36e5,							//过期时间
+	autoCommit: true,							//是否自动提交
+	overwrite: true,								//是否覆盖
+	httpOnly: true,								//http是否不可见
 	// signed:true,								//是否签名
-	rolling:false								//是否在有新操作时刷新
+	rolling: false								//是否在有新操作时刷新
 }
-app.use(session(CONFIG,app))
+app.use(session(CONFIG, app))
 
+//压缩
+app.use(compress({
+	threshold:2048,
+	flush:require('zlib').Z_SYNC_FLUSH
+}))
 // const logger = require('koa-logger')			//导入一个日志模块，便于查看日志
 // app.use(logger())//日志文件，放在第一个中间件中好点
 
@@ -28,11 +34,11 @@ app.use(session(CONFIG,app))
 //在验证密码正确与否时，要和数据库传输，所以要创建一个专门用于存放数据库的文件，方便使用；并且数据库的操作需要koa-schema模块；
 const body = require('koa-body')
 app.use(body())									//配置body，用于获取post请求；
-app.use(static(join(__dirname,'public')))		//在注册路由之前，需要配置静态资源
+app.use(static(join(__dirname, 'public')))		//在注册路由之前，需要配置静态资源
 
 //views中接收两个参数，第一个参数是文件夹地址，第二个参数为模板引擎的类型
 //在views使用app.use注册时，就会在ctx里注册了一个render方法，用于渲染模板引擎，其参数只需要传递模板引擎就可以，其路径是相对于文件夹的路径的。
-app.use(views(join(__dirname,'views'),{
+app.use(views(join(__dirname, 'views'), {
 	extension: 'pug'
 }))	//配置视图模板
 
@@ -54,3 +60,32 @@ app.use(router.routes())
 app.listen(3002, () => {
 	console.log('项目启动成功，监听在3002端口')
 })
+
+{
+	//创建一个管理员用户
+	//账号为admin/密码为admin
+	const {db} = require('./schemas/config')
+	const userSchema = require('./schemas/user')
+	const enCrypto = require('./encrypto')
+	const User = db.model('users', userSchema)
+	User.find({username: 'admin'})
+		.then(data => {
+			if (data.length === 0) {			//如果没有设置管理员账号
+				new User({
+					username: 'admin',
+					password: enCrypto('admin'),
+					articalNum: 0,
+					commentNum: 0,
+					role: 666
+				}).save()
+					.then(data => {
+						console.log('添加管理员信息成功，管理员用户信息：admin')
+					})
+					.catch(err => {
+						console.log('错误')
+					})
+			} else {
+				console.log('管理员账号：admin 密码：admin')
+			}
+		})
+}

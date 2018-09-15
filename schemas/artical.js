@@ -21,6 +21,18 @@ const ArticalSchema = new Schema({
 })
 
 
+//文章的钩子
+ArticalSchema.post('remove',doc=>{
+	const User = require('../models/user')
+	const Comment = require('../models/comment')
+
+	const {_id:artId,auther:autherId} = doc
+	User.findByIdAndUpdate(autherId,{$inc:{articalNum:-1}}).exec()
+	Comment.find({article:artId})
+		.then(data=>{
+			data.forEach(v=>v.remove())
+		})
+})
 
 
 module.exports = ArticalSchema

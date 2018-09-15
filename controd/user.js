@@ -15,23 +15,28 @@ exports.keeplog = async (ctx, next) => {
 	// ctx.session.isNew用于判断session的值是否为一个新的值
 	if (ctx.session.isNew) {			//session没有值的时候，
 		if (ctx.cookies.get('username')) {			//如果cookies里面有值，则赋值给session
+			const avatar = User.findById({_id: ctx.cookies.get('uid')})
+				.then(data => {
+					return ctx.cookies.avatar
+				})
+				.catch(err => {
+					if (err) return console.log(err)
+				})
 			ctx.session = {
 				username: ctx.cookies.get('username'),
-				uid: ctx.cookies.get('uid')
+				uid: ctx.cookies.get('uid'),
 			}
 		}
 	}
 	await next()
-
 }
 
-//处理登录事件
+//处理登录事件,并添加cookies
 exports.login = async (ctx) => {
 	//获取前端发过来的账号密码
 	const user = ctx.request.body
 	const username = user.username
 	const password = user.password
-
 	await new Promise((resolve, reject) => {
 		User.find({username}, (err, data) => {	//用户登录时，先要去数据库查看是否存在该用户名
 			if (err) {					//在查找数据库过程中出错
@@ -66,12 +71,12 @@ exports.login = async (ctx) => {
 				overwrite: false,
 				// signed: true
 			})
-
 			// //传入后台状态session
 			ctx.session = {
 				username,
 				uid: data[0]._id,
-				avatar:data[0].avatar
+				avatar: data[0].avatar,
+				role: data[0].role
 			}
 			await ctx.render('isOk', {status: '登录成功'})
 		})
@@ -110,7 +115,6 @@ exports.reg = async (ctx) => {
 					resolve(data)
 				}
 			})
-
 		})
 	})
 		.then(async data => {
@@ -143,7 +147,22 @@ exports.logout = async (ctx) => {
 	// await ctx.render('isOk',{status:'退出'})
 }
 
+//用户头像上传
+exports.upload = async (ctx) => {
+	const filename = ctx.req.file.filename
+	let data = {}
+	//updataOne用于更新一个，updata用于更新多个，通过用户的id更新，使用$set操作，没有就新增，有就修改
+	await User.update({_id: ctx.session.uid}, {$set: {avatar: '/avatar/' + filename}}, (err, res) => {
+		if (err) {
+			data = {status: 0, message: '上传失败'}
+		} else {
+			ctx.session.avatar = '/avatar/' +filename
+			data = {status: 1, message: '上传成功'}
+		}
 
+	})
+	ctx.body = data
+}
 
 
 
