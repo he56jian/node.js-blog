@@ -12,34 +12,35 @@ exports.addComment = async ctx => {
 	}
 	if (ctx.session.isNew) {			//如果没有登录的情况
 		return ctx.body = massage				//这个指向的是哪个			指向的是弹窗？？？？
+	} else {
+		const data = ctx.request.body		//获取post请求过来的数据
+		//需要获取当前登录的ID
+		data.from = ctx.session.uid
+		const comment = new Comment(data)
+		await comment.save()
+			.then(data => {
+				// 把数据网数据量中添加成功，更新成功
+				massage = {
+					status: 1,
+					msg: '评论成功'
+				}
+				// 更新当前文章的评论计数器
+				article.update({_id: data.article}, {$inc: {commentNum: 1}}, err => {
+					if (err) return console.log(err)
+					console.log('计数器发表成功')
+				})
+				user.update({_id: data.from}, {$inc: {commentNum: 1}}, err => {
+					if (err) return console.log(err)
+					console.log('用户评论计数器发表成功')
+				})
+			})
+			.catch(err => {
+				massage = {
+					status: 0,
+					msg: err
+				}
+			})
 	}
-	const data = ctx.request.body		//获取post请求过来的数据
-	//需要获取当前登录的ID
-	data.from = ctx.session.uid
-	const comment = new Comment(data)
-	await comment.save()
-		.then(data => {
-			// 把数据网数据量中添加成功，更新成功
-			massage = {
-				status: 1,
-				msg: '评论成功'
-			}
-			// 更新当前文章的评论计数器
-			article.update({_id: data.article}, {$inc: {commentNum: 1}}, err => {
-				if (err) return console.log(err)
-				console.log('计数器发表成功')
-			})
-			user.update({_id: data.from}, {$inc: {commentNum: 1}}, err => {
-				if (err) return console.log(err)
-				console.log('用户评论计数器发表成功')
-			})
-		})
-		.catch(err => {
-			massage = {
-				status: 0,
-				msg: err
-			}
-		})
 	ctx.body = massage
 }
 

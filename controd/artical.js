@@ -40,7 +40,7 @@ exports.getList = async (ctx) => {
 		maxNum,
 	})
 }
-//进入文章发表页面
+//进入文章发表页面,新建文章
 exports.addPage = async (ctx) => {
 	await ctx.render('./add-article', {title: '文章发表页面', session: ctx.session})
 }
@@ -67,7 +67,6 @@ exports.add = async ctx => {
 			//更新用户的文章信息
 			User.update({_id: data.auther}, {$inc: {articalNum: 1}}, err => {
 				if (err) return console.log(err)
-				console.log('更新用户文章数量成功')
 			})
 			resolve(data)
 		})
@@ -117,7 +116,7 @@ exports.details = async ctx => {
 
 }
 
-//获取文章列表
+//获取当前用户的文章列表
 exports.articalList = async ctx => {
 	const _id = ctx.session.uid
 	const data = await Articel.find({auther: _id}, (err, data) => {
@@ -130,6 +129,7 @@ exports.articalList = async ctx => {
 	}
 }
 
+//删除文章
 exports.del = async ctx => {
 	const artId = ctx.params.id
 	//这个_id为文章ID；

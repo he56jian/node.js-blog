@@ -15,13 +15,13 @@ exports.keeplog = async (ctx, next) => {
 	// ctx.session.isNew用于判断session的值是否为一个新的值
 	if (ctx.session.isNew) {			//session没有值的时候，
 		if (ctx.cookies.get('username')) {			//如果cookies里面有值，则赋值给session
-			const avatar = User.findById({_id: ctx.cookies.get('uid')})
-				.then(data => {
-					return ctx.cookies.avatar
-				})
-				.catch(err => {
-					if (err) return console.log(err)
-				})
+			// const avatar = User.findById({_id: ctx.cookies.get('uid')})
+			// 	.then(data => {
+			// 		return ctx.cookies.avatar
+			// 	})
+			// 	.catch(err => {
+			// 		if (err) return console.log(err)
+			// 	})
 			ctx.session = {
 				username: ctx.cookies.get('username'),
 				uid: ctx.cookies.get('uid'),
@@ -147,7 +147,7 @@ exports.logout = async (ctx) => {
 	// await ctx.render('isOk',{status:'退出'})
 }
 
-//用户头像上传
+//更新用户头像
 exports.upload = async (ctx) => {
 	const filename = ctx.req.file.filename
 	let data = {}
